@@ -1,5 +1,4 @@
-FROM golang:1.8.0-alpine
+FROM golang:1.11
 
-RUN go get -u github.com/golang/dep/..
-RUN go get -u github.com/golang/lint/golint
-RUN go get github.com/tebeka/go2xunit
+RUN go get -u golang.org/x/lint/golint/...
+RUN go get -u github.com/tebeka/go2xunit
