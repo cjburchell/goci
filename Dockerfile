@@ -4,7 +4,7 @@ env GOCACHE=/tmp/.cache
 RUN mkdir /tmp/.cache
 RUN chmod 777 /tmp/.cache
 
-RUN mkdir /go/src
+RUN ls /go/src
 RUN chmod 777 /go/src
 
 RUN go get -u golang.org/x/lint/golint/...
