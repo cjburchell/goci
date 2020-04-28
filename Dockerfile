@@ -7,6 +7,9 @@ RUN chmod 777 /tmp/.cache
 RUN mkdir /go/src/github.com
 RUN chmod 777 /go/src/github.com
 
+RUN mkdir /go/src/golang.org
+RUN chmod 777 /go/src/golang.org
+
 RUN mkdir /go/src/golang.org/x
 RUN chmod 777 /go/src/golang.org/x
 
