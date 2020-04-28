@@ -3,6 +3,7 @@ pipeline{
     environment {
             DOCKER_IMAGE = "cjburchell/goci"
             DOCKER_TAG = "${env.BRANCH_NAME}"
+			DOCKER_BUILDTAG = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
     }
 
     stages{
@@ -16,10 +17,15 @@ pipeline{
              }
          }
 		 
-        stage('Build') {
+		 stage('Build') {
             steps {
                 script {
-						docker.build("${DOCKER_IMAGE}").tag("${DOCKER_TAG}")
+                    def image = docker.build("${DOCKER_IMAGE}")
+                    image.tag("${DOCKER_TAG}")
+					image.tag("${DOCKER_BUILDTAG}")
+                    if( env.BRANCH_NAME == "master") {
+                        image.tag("latest")
+                    }
                 }
             }
         }
@@ -27,31 +33,38 @@ pipeline{
         stage ('Push') {
             steps {
                 script {
-                    docker.withRegistry('https://390282485276.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:redpoint-ecr-credentials') {
-                            docker.image("${DOCKER_IMAGE}").push("${DOCKER_TAG}")
-                        }
+                    docker.withRegistry('', 'dockerhub') {
+                       def image = docker.image("${DOCKER_IMAGE}")
+                       image.push("${DOCKER_TAG}")
+					   image.push("${DOCKER_BUILDTAG}")
+                       if( env.BRANCH_NAME == "master") {
+                            image.push("latest")
+                       }
                     }
                 }
+            }
         }
     }
 
     post {
-                always {
-                      script{
-                          if ( currentBuild.currentResult == "SUCCESS" ) {
-                            slackSend color: "good", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was successful"
-                          }
-                          else if( currentBuild.currentResult == "FAILURE" ) {
-                            slackSend color: "danger", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was failed"
-                          }
-                          else if( currentBuild.currentResult == "UNSTABLE" ) {
-                            slackSend color: "warning", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was unstable"
-                          }
-                          else {
-                            slackSend color: "danger", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} its result (${currentBuild.currentResult}) was unclear"
-                          }
-                      }
-                }
-            }
+        always {
+              script{
+	              sh "docker system prune -f || true"
+	
+                  if ( currentBuild.currentResult == "SUCCESS" ) {
+                    slackSend color: "good", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was successful"
+                  }
+                  else if( currentBuild.currentResult == "FAILURE" ) {
+                    slackSend color: "danger", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was failed"
+                  }
+                  else if( currentBuild.currentResult == "UNSTABLE" ) {
+                    slackSend color: "warning", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} was unstable"
+                  }
+                  else {
+                    slackSend color: "danger", message: "Job: ${env.JOB_NAME} with build number ${env.BUILD_NUMBER} its result (${currentBuild.currentResult}) was unclear"
+                  }
+              }
+        }
+    }
 
 }
